@@ -1,0 +1,100 @@
+<!doctype html>
+<html>
+
+	<head>
+		<meta name='viewport' content='width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0'>
+		<script src="vendor/three.101.min.js"></script>	
+		<script src="../dist/THREEAR.js"></script>
+		<title>THREE AR Basic Pattern Marker Demo</title>
+		<!-- Bind window error for error handling -->
+		<script>
+			 window.addEventListener('error', function(event) {
+			 	alert("ERROR: " + event.message + " at " + event.filename + " : " + event.lineno + " : " + event.colno);
+			 });
+        </script>
+        <script src="https://threejs.org/examples/js/loaders/MTLLoader.js"></script>
+        <script src="https://threejs.org/examples/js/loaders/OBJLoader.js"></script>
+	</head>
+	<body style='margin : 0px; overflow: hidden; font-family: Monospace;'>
+		<script>
+						
+			var renderer = new THREE.WebGLRenderer({
+				//antialias: true,
+				alpha: true
+			});
+			renderer.setClearColor(new THREE.Color('lightgrey'), 0)
+			renderer.setPixelRatio(window.devicePixelRatio);
+			renderer.setSize( window.innerWidth, window.innerHeight );
+			renderer.domElement.style.position = 'absolute'
+			renderer.domElement.style.top = '0px'
+			renderer.domElement.style.left = '0px'
+			document.body.appendChild( renderer.domElement );
+
+  
+			// init scene and camera
+			var scene = new THREE.Scene();
+			var camera = new THREE.Camera();
+			scene.add(camera);
+
+            var ambientLight = new THREE.AmbientLight( 0xeeeeee, 0.9 );
+			scene.add( ambientLight );
+
+			var markerGroup = new THREE.Group();
+			scene.add(markerGroup);
+		
+			var source = new THREEAR.Source({ renderer, camera });
+
+            var loader = new THREE.OBJLoader();
+
+            new THREE.MTLLoader()
+					.setPath( '../data/model/' )
+					.load( 'zfighting.mtl', function ( materials ) {
+						materials.preload();
+						new THREE.OBJLoader()
+							.setMaterials( materials )
+							.setPath( '../data/model/' )
+							.load( 'zfighting.obj', function ( object ) {
+                                object.position.y = 0.5
+								markerGroup.add( object );
+							} );
+					} );
+
+			THREEAR.initialize({ source: source, positioning: {smooth: true,smoothCount: 2,smoothThreshold: 0.1,smoothTolerance: 0.001}, }).then((controller) => {
+
+				var patternMarker = new THREEAR.PatternMarker({
+					patternUrl: '../data/patt.hiro',
+					markerObject: markerGroup
+                });
+                
+                let m = camera.projectionMatrix;
+                let far = 1000;
+                let near = 0.1;
+
+				// Remove zFighting by changing cameras near/far planes
+				// uncomment this code:
+                // m.elements[10] = -(far + near) / (far - near);
+                // m.elements[14] = -(2 * far * near) / (far - near);
+
+
+				controller.trackMarker(patternMarker);
+
+				// run the rendering loop
+				var lastTimeMsec = 0;
+				requestAnimationFrame(function animate(nowMsec){
+					// keep looping
+					requestAnimationFrame( animate );
+					// measure time
+					lastTimeMsec = lastTimeMsec || nowMsec-1000/60;
+					var deltaMsec = Math.min(200, nowMsec - lastTimeMsec);
+					lastTimeMsec = nowMsec;
+					// call each update function
+					controller.update( source.domElement );
+					renderer.render( scene, camera );
+				});
+
+			});
+
+		</script>
+	</body>
+	
+</html>
