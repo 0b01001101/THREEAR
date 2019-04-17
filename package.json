@@ -9,7 +9,7 @@
     "url" : "https://github.com/JamesMilnerUK/THREEAR.git"
   },
   "scripts": {
-    "serve": "live-server --cors",
+    "serve": "live-server --cors --host=0.0.0.0",
     "build:ci": "webpack --mode=production --config webpack.config.js",
     "build:prod": "webpack --mode=production --config webpack.config.js && npm run docs",
     "build:dev": "webpack --mode=development --config webpack.config.js",
